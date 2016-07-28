@@ -1,0 +1,226 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" href="mdcstyle.css" />
+<title>Phone System CSV Creator</title>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/momentjs/2.14.1/moment.min.js"></script>
+
+<!-- Optional theme -->
+<!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous"> -->
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script src="jquery-csv.min.js"></script>
+
+<script type='text/javascript'>
+//<![CDATA[
+ $(document).ready(function() {
+  var currentItem = 0;
+        $('#addnew').click(function(){
+        currentItem++;
+        $('#items').val(currentItem);
+
+        var strToAdd = $('#entry-base').clone();
+        var now = moment().format('x');
+        strToAdd.find('.collapse-toggle').attr('href', '#'+now);
+        strToAdd.find('#to-collapse').attr('id', now);
+        $('#accordion').append(strToAdd).find('.panel:last').css('display', 'block');
+        $(strToAdd).find('.collapse-toggle:last').click();
+    });
+
+    $('#import-toggle').click(function(e) {
+        $('#import').slideToggle();
+    });
+
+    $('#import').submit(function(e) {
+        e.preventDefault();
+    });
+
+    $("#csvFile").change(function(e) {
+        var ext = $("input#csvFile").val().split(".").pop().toLowerCase();
+
+        if($.inArray(ext, ["csv"]) == -1) {
+            alert('Upload CSV');
+            return false;
+        }
+            
+        if (e.target.files != undefined) {
+            var reader = new FileReader();
+            
+            reader.onload = function(e) {
+                var newEntries;
+                var entries=e.target.result.split("\n");
+                // console.log(entries);
+                entries.shift();
+                entries.pop();
+                // entries.pop();
+                // console.log(entries.length);
+                // another[1] = extension
+                // another[2] = name
+                // another[56] = voicemail
+                // another[58] = email
+                // another[60] = attach
+                // another[96] = devinfo_sendrpid
+
+                // console.log(another[1]);
+                $('#accordion').html('');
+                for(var i=0; i < entries.length; i++) {
+                    var currEntry = entries[i].split(',');
+                    var entry = $('#entry-base').clone();
+                    var now = moment().format('x');
+                    entry.find('.collapse-toggle').attr('href', '#'+now);
+                    entry.find('#to-collapse').attr('id', now);
+                    entry.css('display', 'block');
+                    entry.find('input[name="name[]"]').val(currEntry[2]);
+                    entry.find('input[name="extension[]"]').val(currEntry[1]);
+                    entry.find('input[name="email[]"]').val(currEntry[58]);
+                    entry.find('[name="vm[]"]').val(currEntry[56]);
+                    entry.find('[name="attach[]"]').val(currEntry[60].split('=')[1]);
+                    // entry.find('[name="devinfo_sendrpid[]"]').val(currEntry[96]);
+                    $(entry).appendTo('#accordion');
+                }
+            };
+            reader.readAsText(e.target.files.item(0));
+        }
+        return false;
+    });
+ });
+
+//]]>
+</script> 
+
+</head>
+<body>
+<div class="container">
+    <div class="panel panel-default" style="display: none" id="entry-base">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <a data-toggle="collapse" data-parent="#accordion" href="" class="pull-right collapse-toggle">+/-</a>
+        </h4>
+        <div class="form-group">
+            <label for="name[]">Name:</label>
+            <input class="textfield form-control" name="name[]" id="name[]" type="text" />
+        </div>
+      </div>
+      <div id="to-collapse" class="panel-collapse">
+        <div class="panel-body">
+            <div class="form-group">
+                <label for="email[]">Email:</label>
+                <input class="textfield form-control"  name="email[]" id="email[]" type="email" />
+            </div>
+            <div class="form-group">
+                <label for="extension[]">Extension:</label>
+                <input class="textfield form-control"  name="extension[]" id="extension[]" type="text" />
+            </div>
+            <div class="form-group">
+                <label for="vm[]">Voicemail:</label>
+                <select name="vm[]">
+                    <option value="disabled" selected>Disabled</option>
+                    <option value="enabled">Enabled</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="attach[]">Attach:</label>
+                <select name="attach[]">
+                    <option value="no" selected>No</option>
+                    <option value="yes">Yes</option>
+                </select>
+            </div>
+            <!-- <div class="form-group">
+                <label for="devinfo_sendrpid[]">Dev Info SendRPID:</label>
+                <select name="devinfo_sendrpid[]">
+                    <option value="no" selected>No</option>
+                    <option value="yes">Yes</option>
+                </select>
+            </div> -->
+        </div>
+      </div>
+    </div>
+    <div class="content row" id="data">
+        <h2>Phone System CSV Creator</h2>
+        <form id="genereate-csv" name="form1" method="POST" action="generate.php" class="form-inline">
+            <div class="panel-group" id="accordion">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    <h4 class="panel-title">
+                      <a data-toggle="collapse" data-parent="#accordion" href="#collapse1" class="pull-right">+/-</a>
+                    </h4>
+                    <div class="form-group">
+                        <label for="name[]">Name:</label>
+                        <input class="textfield form-control" name="name[]" id="name[]" type="text" />
+                    </div>
+                  </div>
+                  <div id="collapse1" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label for="email[]">Email:</label>
+                            <input class="textfield form-control"  name="email[]" id="email[]" type="text" />
+                        </div>
+                        <div class="form-group">
+                            <label for="extension[]">Extension:</label>
+                            <input class="textfield form-control"  name="extension[]" id="extension[]" type="text" />
+                        </div>
+                        <div class="form-group">
+                            <label for="vm[]">Voicemail:</label>
+                            <select name="vm[]" id="vm[]">
+                                <option value="disabled" selected>Disabled</option>
+                                <option value="enabled">Enabled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="attach[]">Attach:</label>
+                            <select name="attach[]">
+                                <option value="no" selected>No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                        <!-- <div class="form-group">
+                            <label for="devinfo_sendrpid[]">Dev Info SendRPID:</label>
+                            <select name="devinfo_sendrpid[]">
+                                <option value="no" selected>No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div> -->
+                    </div>
+                  </div>
+                </div>
+            </div>
+            <button class="subbutton btn btn-primary btn-sm pull-right" type="submit">Submit Form</button>
+        </form>   
+
+        <button id="addnew" name="addnew" value="Add new item" class="btn btn-default btn-sm">Add new entry</button>
+        <input type="hidden" id="items" name="items" value="1" />
+        <br>
+    </div>
+    <div class="row" style="margin-top: 20px;">
+        <button id="import-toggle" class="btn btn-sm btn-warning">Import a CSV for Edit</button>
+        <form id="import" name="import" method="POST" style="display: none; margin-top: 20px">
+            <div class="form-group pull-left">
+                <label for="csvFile">File input</label>
+                <input type="file" id="csvFile">
+            </div>
+            <div class="form-group pull-left">
+                <label for="keep_current">Keep current records during import?</label>
+                <div class="radio">
+                  <label><input type="radio" name="keep_current" checked>No</label>
+                </div>
+                <div class="radio">
+                  <label><input type="radio" name="keep_current">Yes</label>
+                </div>
+            </div>
+            <!-- <button id="import-submit" class="btn btn-sm btn-primary pull-left" type="submit">Submit for Import</button> -->
+        </form>
+        <div id="csvimporthint"></div>
+    </div>
+</div>
+</body>
+
+<footer>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+</footer>
+
+</html>
